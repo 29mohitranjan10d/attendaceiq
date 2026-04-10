@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AttendIQ — Shortage Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#080c14;--bg2:#0d1322;--surface:rgba(255,255,255,0.04);--surface2:rgba(255,255,255,0.08);--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--blue:#3b82f6;--blue2:#60a5fa;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--text:#f1f5f9;--muted:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:0.35;}
+.orb1{width:500px;height:500px;background:rgba(59,130,246,0.3);top:-200px;right:-100px;}
+.orb2{width:400px;height:400px;background:rgba(34,197,94,0.15);bottom:-100px;left:-100px;}
+header{position:relative;z-index:10;padding:1.5rem 2rem;border-bottom:1px solid var(--border);background:rgba(8,12,20,0.8);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.logo{display:flex;align-items:center;gap:0.8rem;}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--blue),#818cf8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 0 20px rgba(59,130,246,0.4);}
+.logo-name{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--blue2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px;}
+.logo-sub{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.header-tag{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--blue2);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:0.3rem 0.8rem;border-radius:999px;}
+.tabs{position:relative;z-index:10;display:flex;gap:0;padding:0 2rem;background:rgba(8,12,20,0.6);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{padding:0.9rem 1.4rem;font-size:0.82rem;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--blue2);border-bottom-color:var(--blue);}
+main{position:relative;z-index:5;padding:2rem;max-width:1000px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.3rem;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),transparent);}
+.stat-card.green::before{background:linear-gradient(90deg,var(--green),transparent);}
+.stat-card.red::before{background:linear-gradient(90deg,var(--red),transparent);}
+.stat-card.yellow::before{background:linear-gradient(90deg,var(--yellow),transparent);}
+.stat-label{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;}
+.stat-value{font-size:2rem;font-weight:800;}
+.stat-value.blue{color:var(--blue2);}
+.stat-value.green{color:var(--green);}
+.stat-value.red{color:var(--red);}
+.stat-value.yellow{color:var(--yellow);}
+.glass-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);}
+.card-title{font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;}
+.card-badge{font-family:'DM Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:999px;}
+.badge-blue{background:rgba(59,130,246,0.15);color:var(--blue2);}
+.form-body{padding:1.4rem;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1rem;}
+.form-group{display:flex;flex-direction:column;gap:0.5rem;}
+label{font-size:0.72rem;font-weight:600;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.7rem 1rem;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%;}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.4rem;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#818cf8);color:#fff;box-shadow:0 4px 15px rgba(59,130,246,0.3);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,0.4);}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{border-color:var(--border2);}
+.btn-danger{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.2);color:var(--red);}
+.student-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.student-row:last-child{border-bottom:none;}
+.student-row:hover{background:var(--surface2);}
+.avatar{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),#818cf8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;flex-shrink:0;}
+.student-info{flex:1;}
+.student-name{font-size:0.9rem;font-weight:600;}
+.student-reg{font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.pct-bar-wrap{width:100px;}
+.pct-label{font-size:0.72rem;font-family:'DM Mono',monospace;margin-bottom:0.3rem;text-align:right;}
+.pct-bar{height:6px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.pct-fill{height:100%;border-radius:999px;transition:width 0.6s ease;}
+.shortage-tag{font-size:0.68rem;font-weight:700;font-family:'DM Mono',monospace;padding:0.2rem 0.5rem;border-radius:6px;background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.2);white-space:nowrap;}
+.safe-tag{font-size:0.68rem;font-weight:700;font-family:'DM Mono',monospace;padding:0.2rem 0.5rem;border-radius:6px;background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.15);}
+.att-grid{display:flex;flex-direction:column;gap:0.5rem;padding:1.4rem;}
+.att-row{display:flex;align-items:center;gap:1rem;padding:0.8rem 1rem;background:var(--surface2);border-radius:10px;border:1px solid var(--border);}
+.att-name{flex:1;font-size:0.88rem;font-weight:500;}
+.att-reg{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.att-toggle{display:flex;gap:0.5rem;}
+.toggle-btn{padding:0.35rem 0.9rem;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;font-family:'DM Mono',monospace;}
+.toggle-p{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.toggle-p.selected{background:var(--green);color:#000;}
+.toggle-a{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.toggle-a.selected{background:var(--red);color:#fff;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:200;}
+.modal-overlay.show{display:flex;}
+.modal{background:#0f1729;border:1px solid var(--border2);border-radius:20px;padding:2rem;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.modal h3{font-size:1.1rem;font-weight:800;margin-bottom:1.2rem;}
+.modal-btns{display:flex;gap:0.8rem;margin-top:1.2rem;}
+.toast{position:fixed;bottom:2rem;right:2rem;padding:0.9rem 1.4rem;border-radius:12px;font-size:0.85rem;font-weight:600;z-index:300;transform:translateY(100px);opacity:0;transition:all 0.3s;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:var(--green);backdrop-filter:blur(20px);}
+.toast.error{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);backdrop-filter:blur(20px);}
+.empty{text-align:center;padding:3rem;color:var(--muted);}
+.empty-icon{font-size:2.5rem;margin-bottom:0.8rem;}
+.empty p{font-size:0.85rem;}
+.shortage-banner{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:none;align-items:center;gap:1rem;}
+.shortage-banner.show{display:flex;}
+.shortage-card{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:14px;padding:1.2rem 1.4rem;display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem;transition:background 0.2s;}
+.shortage-card:hover{background:rgba(239,68,68,0.1);}
+.shortage-pct{font-size:1.5rem;font-weight:800;color:var(--red);font-family:'DM Mono',monospace;min-width:60px;text-align:center;}
+.shortage-info{flex:1;}
+.shortage-name{font-size:0.9rem;font-weight:600;}
+.shortage-reg{font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.shortage-needed{font-size:0.75rem;color:var(--yellow);margin-top:0.2rem;}
+.report-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+.report-table th{padding:0.7rem 1rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid var(--border);}
+.report-table td{padding:0.75rem 1rem;border-bottom:1px solid var(--border);}
+.report-table tr:last-child td{border-bottom:none;}
+.report-table tr:hover td{background:var(--surface2);}
+@media(max-width:600px){main{padding:1rem;}header{padding:1rem;}.tabs{padding:0 1rem;}.stat-value{font-size:1.5rem;}.pct-bar-wrap{display:none;}}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-name">AttendIQ</div>
+      <div class="logo-sub">Shortage Predictor · DA2 Project</div>
+    </div>
+  </div>
+  <div class="header-tag">25BCE1575 · Mohit Ranjan</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('students')">👥 Students</div>
+  <div class="tab" onclick="switchTab('mark')">✅ Mark Attendance</div>
+  <div class="tab" onclick="switchTab('report')">📋 Report</div>
+  <div class="tab" onclick="switchTab('shortage')">⚠️ Shortage</div>
+</div>
+
+<main>
+  <!-- DASHBOARD -->
+  <div class="panel active" id="tab-dashboard">
+    <div id="shortageBanner" class="shortage-banner">
+      <span style="font-size:1.3rem">🚨</span>
+      <span style="font-size:0.85rem;color:var(--red)" id="shortageBannerText"></span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-value blue" id="d-total">0</div></div>
+      <div class="stat-card green"><div class="stat-label">Class Average</div><div class="stat-value green" id="d-avg">0%</div></div>
+      <div class="stat-card red"><div class="stat-label">In Shortage</div><div class="stat-value red" id="d-shortage">0</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Safe Students</div><div class="stat-value yellow" id="d-safe">0</div></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-header">
+        <span class="card-title">👥 All Students</span>
+        <button class="btn btn-primary" onclick="openAddModal()" style="padding:0.5rem 1rem;font-size:0.78rem">＋ Add Student</button>
+      </div>
+      <div id="dashStudentList"></div>
+    </div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="panel" id="tab-students">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <div><div style="font-size:1.4rem;font-weight:800">Students</div><div style="font-size:0.8rem;color:var(--muted)">Manage student records</div></div>
+      <button class="btn btn-primary" onclick="openAddModal()">＋ Add Student</button>
+    </div>
+    <div class="glass-card"><div id="studentList"></div></div>
+  </div>
+
+  <!-- MARK -->
+  <div class="panel" id="tab-mark">
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:1.4rem;font-weight:800">Mark Attendance</div>
+      <div style="font-size:0.8rem;color:var(--muted)">Select date and mark P/A for each student</div>
+    </div>
+    <div class="glass-card">
+      <div class="form-body">
+        <div class="form-grid">
+          <div class="form-group"><label>Select Date</label><input type="date" id="markDate"/></div>
+        </div>
+      </div>
+      <div id="markList"></div>
+      <div style="padding:1rem 1.4rem;border-top:1px solid var(--border)">
+        <button class="btn btn-primary" onclick="submitAttendance()">✅ Submit Attendance</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="panel" id="tab-report">
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:1.4rem;font-weight:800">Attendance Report</div>
+      <div style="font-size:0.8rem;color:var(--muted)">Full summary of all students</div>
+    </div>
+    <div class="glass-card">
+      <div class="card-header">
+        <span class="card-title">📋 Full Report</span>
+        <span class="card-badge badge-blue" id="reportCount">0 students</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="report-table">
+          <thead><tr><th>RegNo</th><th>Name</th><th>Present</th><th>Total</th><th>Percentage</th><th>Status</th></tr></thead>
+          <tbody id="reportBody"></tbody>
+        </table>
+      </div>
+      <div style="padding:1rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:0.8rem;color:var(--muted)">Class Average</span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.95rem;font-weight:700;color:var(--blue2)" id="classAvg">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHORTAGE -->
+  <div class="panel" id="tab-shortage">
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:1.4rem;font-weight:800">⚠️ Shortage Predictor</div>
+      <div style="font-size:0.8rem;color:var(--muted)">Students with attendance below 75%</div>
+    </div>
+    <div id="shortageList"></div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>➕ Add New Student</h3>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label>Register Number</label>
+      <input type="text" id="newRegNo" placeholder="e.g. 25BCE1575"/>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="newName" placeholder="e.g. Mohit Ranjan"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const _defaultData = [{"regNo":"25BCE1123","name":"Ayushi Pathak","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1179","name":"Rawat Avani Pradeep","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1220","name":"S Vikram","attendance":{"2026-03-30":"P","2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A"}},{"regNo":"25BCE1356","name":"Swayamrishi Satyaprakash Patra","attendance":{"2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A","2026-03-03":"A","2026-03-04":"A","2026-03-05":"A","2026-03-06":"A","2026-03-09":"A"}},{"regNo":"25BCE1362","name":"Sankhya Bhatia","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE1372","name":"Dhruvika Varshney","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1385","name":"Vidooshi","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1393","name":"Aritra Naskar","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1397","name":"Swara Rajesh Deshmukh","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1433","name":"Ishita Gupta","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1448","name":"Sumedh Mahesh Patange","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1489","name":"Sagnik Sanjay Sen","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1491","name":"Kammula Nagendra Abhinav","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1493","name":"Srishant Jena","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1512","name":"Easwar A P","attendance":{"2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A","2026-03-03":"A","2026-03-04":"A","2026-03-05":"A","2026-03-06":"A","2026-03-09":"A"}},{"regNo":"25BCE1521","name":"Aditya Yadav","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1529","name":"Jayesh Jain","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1575","name":"Mohit Ranjan","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1586","name":"Deshmukh Kunal Anil","attendance":{"2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P","2026-03-03":"P","2026-03-04":"P","2026-03-05":"A"}},{"regNo":"25BCE1602","name":"Sanidh Atreya","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1603","name":"Hitesh J Shenoy","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1638","name":"Keerti Krishna Likhita","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE1642","name":"Nishank Chhipa","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1656","name":"Aanya Bharti","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1698","name":"Shah Tanvi Jayesh","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE1705","name":"Nand Rakesh Shanishchara","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1734","name":"Aryan Mahala","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1744","name":"Rohan Konduru","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE1761","name":"Chaudhari Anvesha Prashant","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1806","name":"B Aarav Krishna","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1824","name":"Sudiksha Gupta","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1830","name":"Singampalli Sai Bharadwaj","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1845","name":"Saicharan M","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE1900","name":"T Yashwanth","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1920","name":"Sarbajeet Pattadar","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1958","name":"Palak Mitharwal","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE1960","name":"R Sainaath","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"A","2026-03-16":"A","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE1982","name":"Chiranjeevi Jyotiba Shinde","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5085","name":"Kalavakollu Keerthana","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5098","name":"Daksh Agarwal","attendance":{"2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A","2026-03-03":"A","2026-03-04":"A","2026-03-05":"A","2026-03-06":"A","2026-03-09":"A"}},{"regNo":"25BCE5101","name":"Pratyush Deo Singh","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5210","name":"Tarun Elangovan","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5212","name":"Avishi Punhani","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5237","name":"R Tej Pariksath Reddy","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5268","name":"Tharun Revinth V S","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE5276","name":"Priyansh","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5319","name":"Sneha Sahu","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE5333","name":"Ananya Krishna","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5340","name":"Suyash Rastogi","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5354","name":"Akash R","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5393","name":"Sarvesh K E","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5395","name":"Bandi Narayana Nihal","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE5418","name":"Bathina Jahnavi","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5520","name":"Prakrit Sood","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE5581","name":"Deepika Agrawal","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"P"}},{"regNo":"25BCE5591","name":"Kunj Patel","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5628","name":"Nalesh Palanisamy Saravanakumar","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5637","name":"Vivan Raj Vallam","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5662","name":"J Jeevan","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5672","name":"Santhosh Sivan S","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"A","2026-03-16":"A","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5675","name":"Theinthamizh Du Ja","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5713","name":"Rithin Daniel","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BCE5737","name":"A S Raihan","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"P","2026-03-27":"P","2026-03-30":"A"}},{"regNo":"25BCE5748","name":"V Vasisht","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"P","2026-03-18":"P","2026-03-19":"P","2026-03-20":"P","2026-03-23":"P","2026-03-24":"P","2026-03-25":"P","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}},{"regNo":"25BLC1312","name":"Arna Anup Panda","attendance":{"2026-03-03":"P","2026-03-04":"P","2026-03-05":"P","2026-03-06":"P","2026-03-09":"P","2026-03-10":"P","2026-03-11":"P","2026-03-12":"P","2026-03-13":"P","2026-03-16":"P","2026-03-17":"A","2026-03-18":"A","2026-03-19":"A","2026-03-20":"A","2026-03-23":"A","2026-03-24":"A","2026-03-25":"A","2026-03-26":"A","2026-03-27":"A","2026-03-30":"A"}}];
+let students=JSON.parse(localStorage.getItem('ai_students')||'null') || JSON.parse(JSON.stringify(_defaultData));
+function save(){localStorage.setItem('ai_students',JSON.stringify(students));}
+function today(){return new Date().toISOString().slice(0,10);}
+function getStats(s){const e=Object.values(s.attendance||{});const total=e.length;const present=e.filter(v=>v==='P').length;const pct=total===0?0:(present/total*100);return{total,present,pct};}
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('markDate').value=today();renderAll();});
+function renderAll(){renderDashboard();renderStudents();renderMarkList();renderReport();renderShortage();}
+function switchTab(name){const names=['dashboard','students','mark','report','shortage'];document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');renderAll();}
+function renderDashboard(){const total=students.length;let sumPct=0,shortage=0;students.forEach(s=>{const{pct}=getStats(s);sumPct+=pct;if(pct<75&&Object.keys(s.attendance||{}).length>0)shortage++;});const avg=total===0?0:sumPct/total;document.getElementById('d-total').textContent=total;document.getElementById('d-avg').textContent=avg.toFixed(1)+'%';document.getElementById('d-shortage').textContent=shortage;document.getElementById('d-safe').textContent=total-shortage;const banner=document.getElementById('shortageBanner');if(shortage>0){banner.classList.add('show');document.getElementById('shortageBannerText').textContent=`${shortage} student${shortage>1?'s are':' is'} in attendance shortage (below 75%). Immediate attention required!`;}else{banner.classList.remove('show');}const div=document.getElementById('dashStudentList');if(students.length===0){div.innerHTML='<div class="empty"><div class="empty-icon">👥</div><p>No students yet. Add your first student!</p></div>';return;}div.innerHTML=students.map(s=>studentRow(s,false)).join('');}
+function studentRow(s,showDel,idx){const{total,present,pct}=getStats(s);const color=pct>=75?'var(--green)':pct>=60?'var(--yellow)':'var(--red)';const initials=s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();const tag=total===0?'':pct>=75?'<span class="safe-tag">Safe</span>':'<span class="shortage-tag">Shortage</span>';return`<div class="student-row"><div class="avatar">${initials}</div><div class="student-info"><div class="student-name">${s.name}</div><div class="student-reg">${s.regNo}</div></div><div class="pct-bar-wrap"><div class="pct-label" style="color:${color}">${pct.toFixed(1)}%</div><div class="pct-bar"><div class="pct-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div></div>${tag}${showDel?`<button class="btn btn-danger" style="padding:0.3rem 0.7rem;font-size:0.75rem" onclick="deleteStudent(${idx})">✕</button>`:''}</div>`;}
+function renderStudents(){const div=document.getElementById('studentList');if(students.length===0){div.innerHTML='<div class="empty"><div class="empty-icon">👥</div><p>No students added yet.</p></div>';return;}div.innerHTML=students.map((s,i)=>studentRow(s,true,i)).join('');}
+function deleteStudent(i){if(!confirm('Delete '+students[i].name+'?'))return;students.splice(i,1);save();renderAll();toast('Student removed','error');}
+function renderMarkList(){const div=document.getElementById('markList');if(students.length===0){div.innerHTML='<div class="empty"><div class="empty-icon">📅</div><p>Add students first to mark attendance.</p></div>';return;}div.innerHTML='<div class="att-grid">'+students.map((s,i)=>`<div class="att-row"><div><div class="att-name">${s.name}</div><div class="att-reg">${s.regNo}</div></div><div class="att-toggle"><button class="toggle-btn toggle-p selected" id="btn-p-${i}" onclick="setStatus(${i},'P')">P</button><button class="toggle-btn toggle-a" id="btn-a-${i}" onclick="setStatus(${i},'A')">A</button></div></div>`).join('')+'</div>';}
+function setStatus(i,status){const p=document.getElementById('btn-p-'+i);const a=document.getElementById('btn-a-'+i);if(status==='P'){p.classList.add('selected');a.classList.remove('selected');}else{a.classList.add('selected');p.classList.remove('selected');}}
+function submitAttendance(){const date=document.getElementById('markDate').value;if(!date){toast('Please select a date','error');return;}let already=0;students.forEach((s,i)=>{if(!s.attendance)s.attendance={};if(s.attendance[date]){already++;return;}const btnA=document.getElementById('btn-a-'+i);const status=btnA&&btnA.classList.contains('selected')?'A':'P';s.attendance[date]=status;});save();renderAll();if(already>0)toast(already+' already marked for this date','error');else toast('Attendance saved for '+date+' ✅','success');}
+function renderReport(){document.getElementById('reportCount').textContent=students.length+' students';let sumPct=0;const tbody=document.getElementById('reportBody');if(students.length===0){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No data yet</td></tr>';document.getElementById('classAvg').textContent='—';return;}tbody.innerHTML=students.map(s=>{const{total,present,pct}=getStats(s);sumPct+=pct;const color=pct>=75?'var(--green)':pct>=60?'var(--yellow)':'var(--red)';const status=total===0?'—':pct>=75?'<span class="safe-tag">Safe</span>':'<span class="shortage-tag">Shortage</span>';return`<tr><td style="font-family:'DM Mono',monospace;font-size:0.8rem">${s.regNo}</td><td style="font-weight:600">${s.name}</td><td style="font-family:'DM Mono',monospace">${present}</td><td style="font-family:'DM Mono',monospace">${total}</td><td style="font-family:'DM Mono',monospace;color:${color};font-weight:700">${pct.toFixed(1)}%</td><td>${status}</td></tr>`;}).join('');document.getElementById('classAvg').textContent=(sumPct/students.length).toFixed(1)+'%';}
+function renderShortage(){const div=document.getElementById('shortageList');const shortage=students.filter(s=>{const{pct,total}=getStats(s);return total>0&&pct<75;}).sort((a,b)=>getStats(a).pct-getStats(b).pct);if(shortage.length===0){div.innerHTML='<div class="glass-card"><div class="empty" style="padding:3rem"><div class="empty-icon">🎉</div><p style="font-size:1rem;font-weight:600;color:var(--green)">No students in shortage!</p><p style="margin-top:0.5rem">All students are above 75% attendance.</p></div></div>';return;}div.innerHTML=shortage.map(s=>{const{total,present,pct}=getStats(s);const needed=Math.max(0,Math.ceil((0.75*total-present)/0.25));return`<div class="shortage-card"><div class="shortage-pct">${pct.toFixed(0)}%</div><div class="shortage-info"><div class="shortage-name">${s.name}</div><div class="shortage-reg">${s.regNo} · ${present}/${total} classes attended</div><div class="shortage-needed">⚡ Needs ${needed} more consecutive present day${needed!==1?'s':''} to reach 75%</div></div><span class="shortage-tag">SHORTAGE</span></div>`;}).join('');}
+function openAddModal(){document.getElementById('addModal').classList.add('show');}
+function closeAddModal(){document.getElementById('addModal').classList.remove('show');}
+function addStudent(){const regNo=document.getElementById('newRegNo').value.trim().toUpperCase();const name=document.getElementById('newName').value.trim();if(!regNo){toast('Enter a register number','error');return;}if(!name){toast('Enter a name','error');return;}if(students.find(s=>s.regNo===regNo)){toast('Student already exists!','error');return;}students.push({regNo,name,attendance:{}});save();document.getElementById('newRegNo').value='';document.getElementById('newName').value='';closeAddModal();renderAll();toast(name+' added successfully!','success');}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3000);}
+</script>
+</body>
+</html>
